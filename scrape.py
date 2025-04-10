@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 import re
 import matplotlib.pyplot as plt
+import google.generativeai as genai
 
 # Define file name
 file_name = "trends24_source.html"
@@ -104,6 +105,8 @@ print(f"\nToday's Top 50 Twitter Trends in {location}:")
 for i, trend in enumerate(top_50_trends, 1):
     print(f"{i}. {trend}")
 
+
+
 # Extract trends and their counts
 trends = []
 counts = []
@@ -138,4 +141,24 @@ plt.title('Top 20 Twitter Trends and Their Counts')
 plt.gca().invert_yaxis()  # Invert Y-axis for better readability
 plt.tight_layout()
 plt.show()
+
+genai.configure(api_key="AIzaSyCymYZe_uKs05eXnyiPibp3TcDbuMQD8qU")
+
+def get_one_liner_for_trend(trend_name):
+    prompt = f"Give a short one-liner explanation (max 30 words) of why '{trend_name}' is trending on Twitter. Give context for a user who doesn't know about these trends."
+    try:
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        response = model.generate_content(prompt)
+        time.sleep(2)
+        return response.text.strip()
+    except Exception as e:
+        return "N/A"
+
+trend_descriptions = []
+print("\nGenerating one-liner descriptions using Gemini API...\n")
+
+for i, trend in enumerate(trends[:50], 1):
+    description = get_one_liner_for_trend(trend)
+    trend_descriptions.append(description)
+    print(f"{i}. {trend} - {description}")
 
