@@ -5,10 +5,26 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import os
+import time
+from datetime import datetime
+import re
+import matplotlib.pyplot as plt
+
+# Define file name
+file_name = "trends24_source.html"
+
+# Check if the file exists and is older than 1 hour
+def is_file_outdated(file_path, max_age_seconds=3600):
+    if os.path.exists(file_path):
+        last_modified_time = os.path.getmtime(file_path)
+        current_time = time.time()
+        age_seconds = current_time - last_modified_time
+        return age_seconds > max_age_seconds
+    return True  # File doesn't exist, treat as outdated
 
 # Configure Chrome options
 options = Options()
-options.add_argument('--headless')  # Remove this line if testing non-headless mode
+options.add_argument('--headless')  
 options.add_argument('--disable-gpu')
 options.add_argument('--allow-insecure-localhost')
 options.add_argument('--ignore-certificate-errors')
@@ -39,24 +55,19 @@ else:
     url = "https://trends24.in/pakistan/"
     location = "Pakistan"
 
-file_name = "trends24_source.html"
-
-try:
-    # Open the URL
-    driver.get(url)
-
-    # Wait for a moment to allow the page to load
-    driver.implicitly_wait(20)
-
-    # Retrieve and print the page source
-    source_html = driver.page_source
-
-    # Optionally save the source to a file for review
-    with open(file_name, "w", encoding="utf-8") as file:
-        file.write(source_html)
-
-finally:
-    driver.quit()
+# Fetch the page source only if the file is outdated
+if is_file_outdated(file_name):
+    try:
+        print("Fetching the latest trends data...")
+        driver.get(url)
+        driver.implicitly_wait(20)
+        source_html = driver.page_source
+        with open(file_name, "w", encoding="utf-8") as file:
+            file.write(source_html)
+    finally:
+        driver.quit()
+else:
+    print("Using cached trends data...")
 
 # Load the HTML content
 with open(file_name, "r", encoding="utf-8") as file:
@@ -65,14 +76,66 @@ with open(file_name, "r", encoding="utf-8") as file:
 # Parse with BeautifulSoup
 soup = BeautifulSoup(html_content, "html.parser")
 
-# Extract trends using appropriate selectors
-# Assuming trends are within <a> tags with the class 'trend-link'
-trends = [trend.text for trend in soup.select(".trend-card__list a.trend-link")]
+# Extract trends and their counts using appropriate selectors
+import re
 
-# Get only the top 50 trends
-top_50_trends = trends[:50]
+# Extract trends and their counts using appropriate selectors
+trends_data = soup.select(".trend-card__list li")
+top_50_trends = []
+
+for trend_item in trends_data[:50]:
+    trend_text = trend_item.select_one("a.trend-link").text.strip()
+    trend_count_element = trend_item.select_one("span")
+    trend_count = trend_count_element.text.strip() if trend_count_element else ""
+    
+    # Extract the numeric part of the trend count and add "K" if numeric
+    if trend_count:
+        # Use regex to extract the numeric part
+        match = re.search(r'(\d+)', trend_count)
+        if match:
+            numeric_count = match.group(1)
+            trend_count = f"{numeric_count}K"
+        top_50_trends.append(f"{trend_text} ({trend_count})")
+    else:
+        top_50_trends.append(trend_text)
 
 # Print the extracted trends
 print(f"\nToday's Top 50 Twitter Trends in {location}:")
 for i, trend in enumerate(top_50_trends, 1):
     print(f"{i}. {trend}")
+
+# Extract trends and their counts
+trends = []
+counts = []
+
+for trend_item in trends_data[:50]:
+    trend_text = trend_item.select_one("a.trend-link").text.strip()
+    trend_count_element = trend_item.select_one("span")
+    trend_count = trend_count_element.text.strip() if trend_count_element else ""
+    
+    # Extract the numeric part of the trend count and add to counts
+    if trend_count:
+        match = re.search(r'(\d+)', trend_count)
+        if match:
+            numeric_count = int(match.group(1))  # Convert count to integer
+            trends.append(trend_text)
+            counts.append(numeric_count)
+    else:
+        trends.append(trend_text)
+        counts.append(0)  # Assign 0 if no count is provided
+
+# Print the extracted trends
+print(f"\nToday's Top 50 Twitter Trends in {location}:")
+for i, (trend, count) in enumerate(zip(trends, counts), 1):
+    print(f"{i}. {trend} ({count}K)")
+
+# Plotting the data
+plt.figure(figsize=(12, 8))
+plt.barh(trends[:20], counts[:20], color='skyblue')  
+plt.xlabel('Trend Counts (K)')
+plt.ylabel('Trends')
+plt.title('Top 20 Twitter Trends and Their Counts')
+plt.gca().invert_yaxis()  # Invert Y-axis for better readability
+plt.tight_layout()
+plt.show()
+
