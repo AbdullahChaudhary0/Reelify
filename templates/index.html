@@ -224,7 +224,7 @@
 
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: var(--space-4);
         }
 
@@ -448,6 +448,17 @@
             box-shadow: var(--shadow-lg);
         }
 
+        .btn-accent {
+            background: var(--gradient-warm);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-accent:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
         .btn-icon {
             font-size: var(--font-size-sm);
         }
@@ -532,6 +543,10 @@
             padding: var(--space-6);
             border-top: 1px solid var(--border);
             background: var(--bg-secondary);
+            display: flex;
+            gap: var(--space-3);
+            align-items: center;
+            justify-content: center;
         }
 
         /* Perfect Trends */
@@ -637,6 +652,55 @@
         .story-content::-webkit-scrollbar-thumb {
             background: var(--gradient-primary);
             border-radius: var(--radius-sm);
+        }
+
+        /* Translation Content Styles */
+        .translation-content {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            font-size: var(--font-size-sm);
+            line-height: 1.7;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            height: 100%;
+            overflow-y: auto;
+            direction: rtl;
+            text-align: right;
+            font-family: 'Noto Nastaliq Urdu', 'Amiri', 'Times New Roman', serif;
+        }
+
+        .translation-toggle {
+            display: flex;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-1);
+            margin-bottom: var(--space-4);
+        }
+
+        .translation-tab {
+            flex: 1;
+            padding: var(--space-2) var(--space-4);
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--duration-200) var(--ease-out);
+        }
+
+        .translation-tab.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .translation-tab:hover:not(.active) {
+            background: var(--surface-hover);
         }
 
         /* Perfect Empty States */
@@ -754,6 +818,26 @@
             line-height: 1.4;
         }
 
+        /* Perfect Button States */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
         /* Perfect Responsive Design */
         @media (max-width: 1024px) {
             .content-grid {
@@ -764,6 +848,10 @@
             .panel {
                 height: auto;
                 min-height: 500px;
+            }
+
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -815,6 +903,11 @@
             .panel-footer {
                 padding: var(--space-4);
             }
+
+            .panel-footer {
+                flex-direction: column;
+                gap: var(--space-2);
+            }
         }
 
         @media (max-width: 480px) {
@@ -830,7 +923,7 @@
                 padding: var(--space-4);
             }
 
-            .story-content {
+            .story-content, .translation-content {
                 padding: var(--space-4);
             }
         }
@@ -866,7 +959,8 @@
         /* Perfect Focus States */
         .btn:focus-visible,
         .location-select:focus-visible,
-        .theme-toggle:focus-visible {
+        .theme-toggle:focus-visible,
+        .translation-tab:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
@@ -874,26 +968,6 @@
         .trend-item:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
-        }
-
-        /* Perfect Button States */
-        .btn-loading {
-            position: relative;
-            color: transparent !important;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
         }
 
         /* Perfect Typography Hierarchy */
@@ -952,13 +1026,14 @@
                             <div class="status-dot loading" id="llamaStatus"></div>
                             <span>Llama</span>
                         </div>
-                        <div class="status-item">
-                            <div class="status-dot online" id="geminiStatus"></div>
-                            <span>Gemini</span>
-                        </div>
+                        
                         <div class="status-item">
                             <div class="status-dot loading" id="scraperStatus"></div>
                             <span>Scraper</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-dot loading" id="translatorStatus"></div>
+                            <span>Translator</span>
                         </div>
                     </div>
                     
@@ -986,16 +1061,13 @@
                     </div>
                     
                     <div style="justify-self: center;">
-                        <button class="btn btn-primary" id="scrapeBtn">
-                            <i class="fas fa-download btn-icon"></i>
-                            <span>Scrape Latest Trends</span>
-                        </button>
+                        <!-- Empty space for layout balance -->
                     </div>
                     
                     <div style="justify-self: end;">
-                        <button class="btn btn-secondary" id="generateBtn" disabled>
-                            <i class="fas fa-magic btn-icon"></i>
-                            <span>Generate Story</span>
+                        <button class="btn btn-primary" id="scrapeBtn">
+                            <i class="fas fa-download btn-icon"></i>
+                            <span>Scrape Latest Trends</span>
                         </button>
                     </div>
                 </div>
@@ -1037,6 +1109,15 @@
                     </div>
                     
                     <div class="panel-content">
+                        <div class="translation-toggle" id="translationToggle" style="display: none;">
+                            <button class="translation-tab active" id="englishTab">
+                                <i class="fas fa-flag-usa"></i> English
+                            </button>
+                            <button class="translation-tab" id="urduTab">
+                                <i class="fas fa-flag"></i> اردو
+                            </button>
+                        </div>
+                        
                         <div class="story-content" id="storyContent">
                             <div class="empty-state">
                                 <div class="empty-icon">
@@ -1048,6 +1129,29 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="translation-content" id="translationContent" style="display: none;">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-language"></i>
+                                </div>
+                                <div class="empty-title">Translation Ready</div>
+                                <div class="empty-description">
+                                    Click "Translate to Urdu" to get the Urdu version of your story
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-footer" id="storyFooter" style="display: none;">
+                        <button class="btn btn-secondary" id="generateBtn" disabled>
+                            <i class="fas fa-magic btn-icon"></i>
+                            <span>Generate Story</span>
+                        </button>
+                        <button class="btn btn-accent" id="translateBtn" disabled>
+                            <i class="fas fa-language btn-icon"></i>
+                            <span>Translate to Urdu</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1106,18 +1210,25 @@
                 this.trends = [];
                 this.selectedTrend = null;
                 this.isGenerating = false;
+                this.isTranslating = false;
                 this.isLoading = false;
                 this.currentLocation = 'pakistan';
+                this.currentStory = null;
+                this.currentTranslation = null;
+                this.currentView = 'english'; // 'english' or 'urdu'
                 this.systemStatus = {
                     llama: false,
                     gemini: true,
-                    scraper: true
+                    scraper: true,
+                    translator: true
                 };
             }
 
             setTrends(trends) {
                 this.trends = trends;
                 this.selectedTrend = null;
+                this.currentStory = null;
+                this.currentTranslation = null;
                 this.updateUI();
             }
 
@@ -1142,9 +1253,31 @@
                 this.updateUI();
             }
 
+            setTranslating(isTranslating) {
+                this.isTranslating = isTranslating;
+                this.updateUI();
+            }
+
             setLoading(isLoading) {
                 this.isLoading = isLoading;
                 this.updateUI();
+            }
+
+            setStory(story) {
+                this.currentStory = story;
+                this.currentTranslation = null;
+                this.currentView = 'english';
+                this.updateUI();
+            }
+
+            setTranslation(translation) {
+                this.currentTranslation = translation;
+                this.updateUI();
+            }
+
+            setView(view) {
+                this.currentView = view;
+                this.updateViewDisplay();
             }
 
             updateSystemStatus(status) {
@@ -1155,6 +1288,8 @@
             updateUI() {
                 this.updateTrendsDisplay();
                 this.updateGenerateButton();
+                this.updateTranslateButton();
+                this.updateStoryFooter();
             }
 
             updateTrendsDisplay() {
@@ -1232,10 +1367,73 @@
                 }
             }
 
+            updateTranslateButton() {
+                const btn = document.getElementById('translateBtn');
+                const icon = btn.querySelector('.btn-icon');
+                const text = btn.querySelector('span');
+                
+                btn.classList.remove('btn-loading');
+                
+                if (this.isTranslating) {
+                    btn.disabled = true;
+                    btn.classList.add('btn-loading');
+                    text.textContent = 'Translating...';
+                } else if (!this.currentStory) {
+                    btn.disabled = true;
+                    icon.className = 'fas fa-file-text btn-icon';
+                    text.textContent = 'Generate Story First';
+                } else if (this.currentTranslation) {
+                    btn.disabled = false;
+                    icon.className = 'fas fa-sync btn-icon';
+                    text.textContent = 'Retranslate';
+                } else {
+                    btn.disabled = false;
+                    icon.className = 'fas fa-language btn-icon';
+                    text.textContent = 'Translate to Urdu';
+                }
+            }
+
+            updateStoryFooter() {
+                const footer = document.getElementById('storyFooter');
+                const translationToggle = document.getElementById('translationToggle');
+                
+                if (this.selectedTrend) {
+                    footer.style.display = 'flex';
+                } else {
+                    footer.style.display = 'none';
+                }
+
+                if (this.currentStory && this.currentTranslation) {
+                    translationToggle.style.display = 'flex';
+                } else {
+                    translationToggle.style.display = 'none';
+                }
+            }
+
+            updateViewDisplay() {
+                const englishTab = document.getElementById('englishTab');
+                const urduTab = document.getElementById('urduTab');
+                const storyContent = document.getElementById('storyContent');
+                const translationContent = document.getElementById('translationContent');
+
+                if (this.currentView === 'english') {
+                    englishTab.classList.add('active');
+                    urduTab.classList.remove('active');
+                    storyContent.style.display = 'block';
+                    translationContent.style.display = 'none';
+                } else {
+                    englishTab.classList.remove('active');
+                    urduTab.classList.add('active');
+                    storyContent.style.display = 'none';
+                    translationContent.style.display = 'block';
+                }
+            }
+
             updateStatusIndicators() {
                 const llamaStatus = document.getElementById('llamaStatus');
                 const geminiStatus = document.getElementById('geminiStatus');
                 const scraperStatus = document.getElementById('scraperStatus');
+                const translatorStatus = document.getElementById('translatorStatus');
 
                 if (llamaStatus) {
                     llamaStatus.className = `status-dot ${this.systemStatus.llama ? 'online' : 'offline'}`;
@@ -1245,6 +1443,9 @@
                 }
                 if (scraperStatus) {
                     scraperStatus.className = `status-dot ${this.systemStatus.scraper ? 'online' : 'offline'}`;
+                }
+                if (translatorStatus) {
+                    translatorStatus.className = `status-dot ${this.systemStatus.translator ? 'online' : 'offline'}`;
                 }
             }
         }
@@ -1318,6 +1519,25 @@
                 }
             }
 
+            async translateStory(text = null) {
+                try {
+                    const response = await fetch('/api/translate-story', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error translating story:', error);
+                    throw error;
+                }
+            }
+
             async checkHealth() {
                 try {
                     const response = await fetch('/api/health');
@@ -1342,7 +1562,11 @@
         const locationSelect = document.getElementById('locationSelect');
         const scrapeBtn = document.getElementById('scrapeBtn');
         const generateBtn = document.getElementById('generateBtn');
+        const translateBtn = document.getElementById('translateBtn');
+        const englishTab = document.getElementById('englishTab');
+        const urduTab = document.getElementById('urduTab');
         const storyContent = document.getElementById('storyContent');
+        const translationContent = document.getElementById('translationContent');
         const storyStatus = document.getElementById('storyStatus');
 
         // Perfect event handlers
@@ -1404,6 +1628,7 @@
                 
                 if (result.success) {
                     storyContent.textContent = result.story;
+                    appState.setStory(result.story);
                     storyStatus.textContent = `Generated using ${result.model_used} • ${new Date().toLocaleTimeString()}`;
                     notifications.success('Story generated successfully!');
                 } else {
@@ -1429,13 +1654,65 @@
             }
         }
 
+        async function handleTranslateStory() {
+            if (!appState.currentStory || appState.isTranslating) return;
+
+            appState.setTranslating(true);
+            storyStatus.textContent = 'Translating story to Urdu...';
+            
+            // Show loading in translation content
+            translationContent.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <div class="loading-text">
+                        Translating your story to Urdu...<br>
+                        This may take a few moments for accurate translation.
+                    </div>
+                </div>
+            `;
+            
+            try {
+                const result = await apiClient.translateStory(appState.currentStory);
+                
+                if (result.success) {
+                    translationContent.textContent = result.translated_text;
+                    appState.setTranslation(result.translated_text);
+                    storyStatus.textContent = `Translated to ${result.target_language} • ${new Date().toLocaleTimeString()}`;
+                    notifications.success('Story translated to Urdu successfully!');
+                    
+                    // Auto-switch to Urdu view
+                    appState.setView('urdu');
+                } else {
+                    throw new Error(result.error || 'Failed to translate story');
+                }
+            } catch (error) {
+                translationContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="empty-title">Translation Failed</div>
+                        <div class="empty-description">
+                            Unable to translate story. The translation model may be loading. Please try again.
+                        </div>
+                    </div>
+                `;
+                storyStatus.textContent = 'Translation failed';
+                notifications.error('Translation failed. The model may be loading on first use. Please try again.');
+                console.error('Translation error:', error);
+            } finally {
+                appState.setTranslating(false);
+            }
+        }
+
         async function checkSystemHealth() {
             const health = await apiClient.checkHealth();
             if (health) {
                 appState.updateSystemStatus({
                     llama: health.llama_available,
                     gemini: health.gemini_available,
-                    scraper: true
+                    scraper: true,
+                    translator: health.translator_available
                 });
             }
         }
@@ -1443,6 +1720,10 @@
         // Perfect event listeners
         scrapeBtn.addEventListener('click', handleScrapeTrends);
         generateBtn.addEventListener('click', handleGenerateStory);
+        translateBtn.addEventListener('click', handleTranslateStory);
+
+        englishTab.addEventListener('click', () => appState.setView('english'));
+        urduTab.addEventListener('click', () => appState.setView('urdu'));
 
         locationSelect.addEventListener('change', () => {
             appState.currentLocation = locationSelect.value;
@@ -1454,7 +1735,17 @@
                     </div>
                     <div class="empty-title">Location Changed</div>
                     <div class="empty-description">
-                        Scrape trends for the new location to generate stories
+                    </div>
+                </div>
+            `;
+            translationContent.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-language"></i>
+                    </div>
+                    <div class="empty-title">Translation Ready</div>
+                    <div class="empty-description">
+                        Generate a story first, then translate it to Urdu
                     </div>
                 </div>
             `;
@@ -1475,9 +1766,27 @@
                             handleGenerateStory();
                         }
                         break;
+                    case 'u':
+                        event.preventDefault();
+                        if (appState.currentStory && !appState.isTranslating) {
+                            handleTranslateStory();
+                        }
+                        break;
                     case 't':
                         event.preventDefault();
                         themeManager.toggleTheme();
+                        break;
+                    case '1':
+                        event.preventDefault();
+                        if (appState.currentStory) {
+                            appState.setView('english');
+                        }
+                        break;
+                    case '2':
+                        event.preventDefault();
+                        if (appState.currentTranslation) {
+                            appState.setView('urdu');
+                        }
                         break;
                 }
             }

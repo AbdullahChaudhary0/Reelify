@@ -1,3 +1,16 @@
+"""
+Viral Trends Story Generator Application
+
+This Flask application scrapes trending topics from social media platforms,
+generates AI-powered news stories, and provides translation services from
+English to Urdu. It serves as a comprehensive content creation tool for
+digital media professionals.
+
+Author: [Aaqib Ansari]
+Date: [2025-06-17]
+Version: 1.0.0
+"""
+
 from flask import Flask, render_template, request, jsonify, session
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -15,11 +28,73 @@ import json
 import threading
 from functools import wraps
 
+# Import translation functionality
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Change this to a secure random key
 
 # Configure Gemini API
 genai.configure(api_key="AIzaSyCymYZe_uKs05eXnyiPibp3TcDbuMQD8qU")
+
+class FacebookUrduTranslator:
+    def __init__(self, model_name="facebook/nllb-200-distilled-600M"):
+        self.tokenizer = None
+        self.model = None
+        self.model_name = model_name
+        self.src_lang = "eng_Latn"
+        self.tgt_lang = "urd_Arab"
+        self.is_loaded = False
+        
+    def load_model(self):
+        """Load the translation model (lazy loading)"""
+        if not self.is_loaded:
+            try:
+                print("Loading translation model... This may take a few minutes on first run.")
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name)
+                self.tokenizer.src_lang = self.src_lang
+                self.lang_code_to_id = {
+                    "eng_Latn": self.tokenizer.convert_tokens_to_ids("eng_Latn"),
+                    "urd_Arab": self.tokenizer.convert_tokens_to_ids("urd_Arab"),
+                }
+                self.is_loaded = True
+                print("Translation model loaded successfully!")
+            except Exception as e:
+                print(f"Error loading translation model: {e}")
+                raise e
+
+    def translate(self, text):
+        """Translate English text to Urdu"""
+        if not self.is_loaded:
+            self.load_model()
+            
+        try:
+            # Split long text into chunks to avoid token limits
+            max_length = 400  # Adjust based on model's max input length
+            chunks = [text[i:i+max_length] for i in range(0, len(text), max_length)]
+            translated_chunks = []
+            
+            for chunk in chunks:
+                inputs = self.tokenizer(chunk, return_tensors="pt", padding=True, truncation=True, max_length=512)
+                if self.tgt_lang not in self.lang_code_to_id:
+                    raise ValueError(f"Target language '{self.tgt_lang}' is not supported.")
+                
+                forced_bos_token_id = self.lang_code_to_id[self.tgt_lang]
+                generated_tokens = self.model.generate(
+                    **inputs, 
+                    forced_bos_token_id=forced_bos_token_id,
+                    max_length=512,
+                    num_beams=4,
+                    early_stopping=True
+                )
+                translated_chunk = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
+                translated_chunks.append(translated_chunk)
+            
+            return ' '.join(translated_chunks)
+        except Exception as e:
+            print(f"Translation error: {e}")
+            raise e
 
 class TrendScraper:
     def __init__(self):
@@ -50,8 +125,10 @@ class TrendScraper:
     def scrape_trends(self, location):
         if location == "pakistan":
             url = "https://trends24.in/pakistan/"
+            self.file_name = "trends24_pakistan.html"
         elif location == "united-states":
             url = "https://trends24.in/united-states/"
+            self.file_name = "trends24_us.html"
         else:
             url = "https://trends24.in/pakistan/"
         
@@ -80,7 +157,7 @@ class TrendScraper:
         trends_data = soup.select(".trend-card__list li")
         
         trends = []
-        for i, trend_item in enumerate(trends_data[:50]):
+        for i, trend_item in enumerate(trends_data[:20]):
             trend_text_element = trend_item.select_one("a.trend-link")
             if not trend_text_element:
                 continue
@@ -123,7 +200,7 @@ class LlamaStoryGenerator:
         except:
             return False
     
-    def create_story_prompt(self, tag, description, story_length="2-3 minutes"):
+    def create_story_prompt(self, tag, description, story_length="0.5-1 minute"):
         return f"""You are a professional news story writer creating engaging and educatiion content for video production as a Pakistani.
 
 TRENDING TOPIC: {tag}
@@ -131,11 +208,11 @@ CONTEXT: {description}
 
 Create a compelling {story_length} news story suitable for video content with the following structure:
 
-1. HOOK (15-20 seconds): Start with an attention-grabbing opening that immediately draws viewers in
-2. BACKGROUND (30-45 seconds): Provide essential context and background information
-3. CURRENT DEVELOPMENTS (60-90 seconds): Detail what's happening right now and recent events
-4. ANALYSIS (30-45 seconds): Explain why this matters and potential implications
-5. CONCLUSION (15-20 seconds): Wrap up with what to watch for next
+1. HOOK (5-10 seconds): Start with an attention-grabbing opening that immediately draws viewers in
+2. BACKGROUND (10-15 seconds): Provide essential context and background information
+3. CURRENT DEVELOPMENTS (20-25 seconds): Detail what's happening right now and recent events
+4. ANALYSIS (10-15 seconds): Explain why this matters and potential implications
+5. CONCLUSION (5-10 seconds): Wrap up with what to watch for next
 
 REQUIREMENTS:
 - Write in a conversational, engaging tone suitable for video narration
@@ -187,6 +264,7 @@ def get_one_liner_for_trend(trend_name):
 # Initialize global objects
 trend_scraper = TrendScraper()
 story_generator = LlamaStoryGenerator()
+translator = FacebookUrduTranslator()
 
 # Routes
 @app.route('/')
@@ -197,7 +275,7 @@ def index():
 def scrape_trends():
     try:
         data = request.get_json()
-        location = data.get('location', 'pakistan')
+        location = data.get('location')
         
         # Scrape trends
         trends = trend_scraper.scrape_trends(location)
@@ -238,30 +316,8 @@ def generate_story():
         # Try Llama first
         story = story_generator.generate_story_with_llama(tag, description)
         
-        if not story:
-            # Fallback to Gemini if Llama is not available
-            prompt = f"""Create a compelling 2-3 minute news story about the trending topic '{tag}'.
-
-Context: {description}
-
-Structure the story with:
-1. HOOK (15-20 seconds): Attention-grabbing opening
-2. BACKGROUND (30-45 seconds): Essential context
-3. CURRENT DEVELOPMENTS (60-90 seconds): What's happening now
-4. ANALYSIS (30-45 seconds): Why this matters
-5. CONCLUSION (15-20 seconds): What to watch next
-
-Write in a conversational, engaging tone suitable for video narration."""
-            
-            try:
-                model = genai.GenerativeModel("gemini-2.0-flash")
-                response = model.generate_content(prompt)
-                story = response.text.strip()
-            except Exception as e:
-                return jsonify({
-                    'success': False,
-                    'error': f'Failed to generate story: {str(e)}'
-                }), 500
+        # Store the generated story in session for translation
+        session['last_generated_story'] = story
         
         return jsonify({
             'success': True,
@@ -276,14 +332,49 @@ Write in a conversational, engaging tone suitable for video narration."""
             'error': str(e)
         }), 500
 
+@app.route('/api/translate-story', methods=['POST'])
+def translate_story():
+    try:
+        data = request.get_json()
+        text_to_translate = data.get('text')
+        
+        if not text_to_translate:
+            # Try to get the last generated story from session
+            text_to_translate = session.get('last_generated_story')
+            
+        if not text_to_translate:
+            return jsonify({
+                'success': False,
+                'error': 'No text provided and no story found in session'
+            }), 400
+        
+        # Translate the text
+        translated_text = translator.translate(text_to_translate)
+        
+        return jsonify({
+            'success': True,
+            'original_text': text_to_translate,
+            'translated_text': translated_text,
+            'source_language': 'English',
+            'target_language': 'Urdu'
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Translation failed: {str(e)}'
+        }), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     llama_status = story_generator.check_ollama_status()
+    translator_status = True  # Always available once loaded
     
     return jsonify({
         'status': 'healthy',
         'llama_available': llama_status,
         'gemini_available': True,  # Assuming Gemini is configured
+        'translator_available': translator_status,
         'timestamp': datetime.now().isoformat()
     })
 
