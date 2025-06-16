@@ -39,7 +39,7 @@ class LlamaStoryGenerator:
             print("❌ Ollama connection timed out. Check if ollama serve is running.")
             return False
     
-    def create_story_prompt(self, tag, description, story_length="2-3 minutes"):
+    def create_story_prompt(self, tag, description, story_length="0.5-1 minutes"):
         """Create a structured prompt for story generation"""
         prompt = f"""You are a professional news story writer creating engaging content for video production.
 
@@ -48,11 +48,11 @@ CONTEXT: {description}
 
 Create a compelling {story_length} news story suitable for video content with the following structure:
 
-1. HOOK (15-20 seconds): Start with an attention-grabbing opening that immediately draws viewers in
-2. BACKGROUND (30-45 seconds): Provide essential context and background information
-3. CURRENT DEVELOPMENTS (60-90 seconds): Detail what's happening right now and recent events
-4. ANALYSIS (30-45 seconds): Explain why this matters and potential implications
-5. CONCLUSION (15-20 seconds): Wrap up with what to watch for next
+1. HOOK (5 seconds): Start with an attention-grabbing opening that immediately draws viewers in
+2. BACKGROUND (5 seconds): Provide essential context and background information
+3. CURRENT DEVELOPMENTS (10 seconds): Detail what's happening right now and recent events
+4. ANALYSIS (10 seconds): Explain why this matters and potential implications
+5. CONCLUSION (10 seconds): Wrap up with what to watch for next
 
 REQUIREMENTS:
 - Write in a conversational, engaging tone suitable for video narration

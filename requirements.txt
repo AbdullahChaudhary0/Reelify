@@ -2,3 +2,7 @@ selenium==4.14.0
 webdriver-manager==4.0.0
 beautifulsoup4==4.12.2
 requests==2.31.0
+numpy<2
+torch>=2.1.0
+transformers>=4.38
+sentencepiece

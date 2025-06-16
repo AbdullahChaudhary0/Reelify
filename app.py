@@ -124,7 +124,7 @@ class LlamaStoryGenerator:
             return False
     
     def create_story_prompt(self, tag, description, story_length="2-3 minutes"):
-        return f"""You are a professional news story writer creating engaging content for video production.
+        return f"""You are a professional news story writer creating engaging and educatiion content for video production as a Pakistani.
 
 TRENDING TOPIC: {tag}
 CONTEXT: {description}
